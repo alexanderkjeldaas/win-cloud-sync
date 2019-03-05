@@ -69,4 +69,4 @@ $scriptUrl = "https://raw.githubusercontent.com/alexanderkjeldaas/win-cloud-sync
 write-host "Fetching and executing $scriptUrl"
 $content = (Invoke-WebRequest -Uri $scriptUrl -Headers @{"Cache-Control"="no-cache"}).content
 Invoke-Expression $content
-DoIt
+DoIt .
