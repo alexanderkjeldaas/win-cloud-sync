@@ -123,6 +123,7 @@ Function doit{
            [string]$temp=$env:TEMP,
            [boolean]$beta=$true)
 
+    write-host "Configuring download security protocols"
     [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
     write-host "Downloading and installing the rclone binary and installing into $location"
     install-rclone $location -exeonly $exeonly
