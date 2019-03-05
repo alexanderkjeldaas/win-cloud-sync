@@ -109,3 +109,17 @@ Function install-nssm{
 
     @($nssmWindows, $zipFile) | foreach {Remove-Item $_ -Recurse}
 }
+
+Function doit{
+    param ([Parameter(Position=1)]
+           [string]$location="c:\windows\system32",
+           [Parameter(Mandatory=$false)]
+           [boolean]$exeonly=$true,
+           [string]$temp=$env:TEMP,
+           [boolean]$beta=$true)
+
+    write-host "Downloading and installing the rclone binary and installing into $location"
+    install-rclone $location -exeonly $exeonly
+    write-host "Downloading and installing the nssm binary and installing into $location"
+    install-nssm $location -exeonly $exeonly
+}
