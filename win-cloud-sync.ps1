@@ -66,4 +66,4 @@ param (
 # write-host "The win-cloud-sync This script will install a service called win-cloud-sync on your system"
 
 $scriptUrl = "https://raw.githubusercontent.com/alexanderkjeldaas/win-cloud-sync/master/lib.ps1"
-Invoke-Expression ((Invoke-WebRequest -Uri $scriptUrl).content)
+Invoke-Expression ((Invoke-WebRequest -Uri $scriptUrl -Headers @{"Cache-Control"="no-cache"}).content)
