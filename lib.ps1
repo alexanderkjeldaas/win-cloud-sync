@@ -119,9 +119,23 @@ Function install-nssm{
     @($nssmWindows, $zipFile) | foreach {Remove-Item $_ -Recurse}
 }
 
+Function Write-RClone-Conf{
+    $location = Join-Path (Join-Path $HOME ".config") "rclone"
+    New-Item -ItemType Directory -Force -Path $location
+
+    @("[astorai]",
+      "type = gcs",
+      "service_account_file = service_account_file.txt",
+      "object_acl = bucketOwnerFullControl",
+      "location = europe-north1"
+    ) | foreach {add-content (Join-Path $location "rclone.conf")}
+}
+
 Function doit{
     param ([Parameter(Position=1)]
            [string]$location="c:\windows\system32",
+           [Parameter(Position=2)]
+           [string]$serviceAccountFile,
            [Parameter(Mandatory=$false)]
            [boolean]$exeonly=$true,
            [string]$temp=$env:TEMP,
@@ -133,4 +147,5 @@ Function doit{
     install-rclone $location -exeonly $exeonly
     write-host "Downloading and installing the nssm binary and installing into $location"
     install-nssm $location -exeonly $exeonly
+    write-rclone-conf
 }

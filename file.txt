@@ -1,0 +1,7 @@
+write-output "asdf"; write-output "asdf" 
+asdf
+asdf
+asdf
+asdf
+asdf
+asdf
