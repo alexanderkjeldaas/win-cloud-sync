@@ -2,8 +2,6 @@
 
 Simplify making a all-in-one local file system to cloud object storage synchronization service.
 
-This is similar to 
-
 This is an alternative to having a google drive mounted locally, dropbox or similar.
 It is meant to be as simple and fail-proof as possible, and to run in a server environment.
 
@@ -14,19 +12,12 @@ It is meant to be as simple and fail-proof as possible, and to run in a server e
 
 ### Usage
 
-This assumes you are running on Linux
+This assumes you are running on Windows Server 2012 R2
 
-#### Installation
+```
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted
+```
 
-1. Clone this repo
-2. Run rclone config to create a new default config.
-3. R
-3. Run build.sh
-4. Move the win-cloud-sync.zip file to the server and unzip it.
-5. Run `install.cmd` on the server to install the service using nssm.
-
-#### Removal
-
-1. Run `uninstall.cmd` on the server to uninstall the service.
-2. Remove the installation directory.
+Then save the [`win-cloud-sync.ps1`](https://raw.githubusercontent.com/alexanderkjeldaas/win-cloud-sync/master/win-cloud-sync.ps1) file 
+to local disk and run it (`.\win-cloud-sync.ps1`) from within a shell window.
 
