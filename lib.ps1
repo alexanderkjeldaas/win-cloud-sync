@@ -120,32 +120,103 @@ Function install-nssm{
 }
 
 Function Write-RClone-Conf{
-    $location = Join-Path (Join-Path $HOME ".config") "rclone"
-    New-Item -ItemType Directory -Force -Path $location
+    param (
+           [string]$location,
+           [string]$serviceAccountFile
+    )
 
+    $outfile = Join-Path $location "rclone.conf"
+    Remove-Item $outfile -ErrorAction Ignore
     @("[astorai]",
       "type = gcs",
-      "service_account_file = service_account_file.txt",
+      "service_account_file = $serviceAccountFile",
       "object_acl = bucketOwnerFullControl",
       "location = europe-north1"
-    ) | foreach {add-content (Join-Path $location "rclone.conf")}
+    ) | foreach {add-content $outfile -Value $_}
+}
+
+
+function install-nssm-service{
+    param (
+           [string]$location,
+           [string]$emiInputFolder,
+           [string]$emiOutputFolder,
+           [string]$logs,
+           [string]$clientName
+    )
+    $nssm = Join-Path $location "nssm.exe"
+    foreach ($item in @("astorai-input", "astorai-output")) {
+        if (Get-Service $item -ErrorAction Ignore) {
+            & $nssm stop $item
+            & $nssm remove $item confirm
+        }
+    }
+    $configLocation = Join-Path $location "rclone.conf"
+    $rcloneBinary = Join-Path $location "rclone"
+    & $nssm install astorai-input $rcloneBinary "-v --config $configLocation sync astorai:waybills/$clientName/toEMI $emiInputFolder"
+    & $nssm install astorai-output $rcloneBinary "-v --config $configLocation sync $emiOutputFolder astorai:waybills/$clientName/fromEMI"
+    foreach ($item in @("astorai-input", "astorai-output")) {
+        & $nssm set $item Description "EMI sync between local and remote folders"
+        & $nssm set $item AppDirectory $location
+        & $nssm set $item AppRestartDelay 300000
+        & $nssm set $item AppStdout (Join-Path $logs "$item.log")
+        & $nssm set $item AppStderr (Join-Path $logs "$item.err")
+        & $nssm set $item AppExit Default Restart
+        & $nssm set $item AppRotateFiles 1
+        & $nssm set $item AppRotateOnline 0
+        # 1 week log rotation
+        & $nssm set $item AppRotateSeconds 604800
+        & $nssm set $item AppRotateBytes 10000000
+        & $nssm start $item
+    }
 }
 
 Function doit{
-    param ([Parameter(Position=1)]
+    param (
            [string]$location="c:\windows\system32",
-           [Parameter(Position=2)]
+           [Parameter(Mandatory=$true)]
            [string]$serviceAccountFile,
+           [Parameter(Mandatory=$true)]
+           [string]$emiInputFolder,
+           [Parameter(Mandatory=$true)]
+           [string]$emiOutputFolder,
+           [Parameter(Mandatory=$true)]
+           [string]$clientName,
            [Parameter(Mandatory=$false)]
            [boolean]$exeonly=$true,
            [string]$temp=$env:TEMP,
            [boolean]$beta=$true)
 
+    $logs = Join-Path $location "logs"
+    foreach ($item in @($location, $emiInputFolder, $emiOutputFolder, $logs)) {
+        write-host "Checking that $item exist and is writable";
+        if (!(Test-write $item)) {
+            write-host "$item was not writable.  I will try to create it and retry";
+            New-Item -ItemType Directory -Force -Path $item | out-null
+            if (!(Test-write $item)) {
+                write-host "$item is still not writable.";
+                throw "Giving up"
+            }
+        }
+    }
+    $emiInputFolderResolved = Resolve-Path $emiInputFolder
+    $emiOutputFolderResolved = Resolve-Path $emiOutputFolder
+    $serviceAccountFileDest = Join-Path $location "service_account_file.txt"
     write-host "Configuring download security protocols"
     [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
     write-host "Downloading and installing the rclone binary and installing into $location"
     install-rclone $location -exeonly $exeonly
     write-host "Downloading and installing the nssm binary and installing into $location"
     install-nssm $location -exeonly $exeonly
-    write-rclone-conf
+    write-host "Copying the service account file from $serviceAccountFile to $serviceAccountFileDest"
+    Copy-Item $serviceAccountFile -Destination $serviceAccountFileDest -Force
+    write-host "Creating rclone config for the 'astorai' remote"
+    write-rclone-conf $location $serviceAccountFileDest
+    if ($env:OS -eq "Windows_NT") {
+        write-host "Setting up an nssm service that syncs"
+        write-host $emiInputFolderResolved
+        write-host $emiOutputFolderResolved
+        write-host "every 5 minutes"
+        install-nssm-service $location $emiInputFolderResolved $emiOutputFolderResolved $logs $clientName
+    }
 }

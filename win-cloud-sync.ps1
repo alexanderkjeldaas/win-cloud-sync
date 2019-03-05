@@ -48,25 +48,35 @@
 # This 
 # param ($ComputerName = $(throw "ComputerName parameter is required."))
 param (
-    [string]$server = "http://defaultserver",
-#    [string]$password = $(Read-Host "Input password, please"),
-    [switch]$force = $false
+    [string]$location = $(Read-Host "Location where I should put executables [ default: c:\astorai ]"),
+    [ValidateScript({
+      if( -Not ($_ | Test-Path) ){
+          throw "File does not exist"
+      }
+      return $true
+    })]
+    [System.IO.FileInfo]$serviceAccountFile = $(Read-Host "Path to the service_account_file.txt"),
+    [System.IO.FileInfo]$emiInputFolder = $(Read-Host "EMI input folder (to be processed locally)"),
+    [System.IO.FileInfo]$emiOutputFolder = $(Read-Host "EMI output folder (to be processed externally)"),
+    [System.IO.FileInfo]$clientName = $(Read-Host "Short client name representing your company")
 )
-
-#[remote]
-#type = google cloud storage
-#client_id =
-#client_secret =
-#token = {"AccessToken":"xxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"x/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxxxxx","Expiry":"2014-07-17T20:49:14.929208288+01:00","Extra":null}
-#project_number = 12345678
-#object_acl = private
-#bucket_acl = private
 
 # write-host "This script will install a service called win-cloud-sync on your system."
 # write-host "The win-cloud-sync This script will install a service called win-cloud-sync on your system"
+if ($location -eq "") {
+  $location = Join-Path "c:" "astorai"
+}
 
-$scriptUrl = "https://raw.githubusercontent.com/alexanderkjeldaas/win-cloud-sync/master/lib.ps1"
-write-host "Fetching and executing $scriptUrl"
-$content = (Invoke-WebRequest -Uri $scriptUrl -Headers @{"Cache-Control"="no-cache"}).content
-Invoke-Expression $content
-DoIt -location . -serviceAccountFile "service_account_file.txt"
+if ($serviceAccountFile -eq "") {
+  $serviceAccountFile = Resolve-Path "." "service_account_file.txt"
+}
+
+Function install{
+    $scriptUrl = "https://raw.githubusercontent.com/alexanderkjeldaas/win-cloud-sync/master/lib.ps1"
+    write-host "Fetching and executing $scriptUrl"
+    $content = (Invoke-WebRequest -Uri $scriptUrl -Headers @{"Cache-Control"="no-cache"}).content
+    Invoke-Expression $content
+    DoIt -location $location -serviceAccountFile $serviceAccountFile -emiInputFolder $emiInputFolder -emiOutputFolder $emiOutputFolder -clientName $clientName
+}
+
+install 

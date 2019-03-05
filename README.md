@@ -15,7 +15,7 @@ It is meant to be as simple and fail-proof as possible, and to run in a server e
 This assumes you are running on Windows Server 2012 R2
 
 ```
-Set-ExecutionPolicy -ExecutionPolicy Unrestricted
+Set-ExecutionPolicy Unrestricted
 ```
 
 Then save the [`win-cloud-sync.ps1`](https://raw.githubusercontent.com/alexanderkjeldaas/win-cloud-sync/master/win-cloud-sync.ps1) file 
