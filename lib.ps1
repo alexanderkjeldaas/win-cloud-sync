@@ -107,6 +107,11 @@ Function install-nssm{
 
     Move-Item $item -Destination $location -Force
 
+    # Hack to remove a nasty .gitignore file that is wrongly assumed to give
+    # a permission denied issue.
+    remove-item -Force (dir -Hidden (dir (dir $nssmWindows)))
+
+    # Do a regular remove
     @($nssmWindows, $zipFile) | foreach {Remove-Item $_ -Recurse}
 }
 
