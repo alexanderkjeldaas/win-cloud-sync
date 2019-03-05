@@ -110,10 +110,13 @@ Function install-nssm{
 
     # Hack to remove a nasty .gitignore file that is wrongly assumed to give
     # a permission denied issue.
-    #remove-item -Force (dir -Hidden (dir (dir $nssmWindows)))
+    # TODO: Better detection of OS X
+    if ($env:OS -ne "Windows_NT") {
+        remove-item -Force (dir -Hidden (dir (dir $nssmWindows)))
+    }
 
     # Do a regular remove
-#    @($nssmWindows, $zipFile) | foreach {Remove-Item $_ -Recurse}
+    @($nssmWindows, $zipFile) | foreach {Remove-Item $_ -Recurse}
 }
 
 Function doit{
