@@ -104,7 +104,7 @@ Function install-nssm{
     Unzip $zipFile $nssmWindows
     write-host "Uncompressed nssm distribution from $zipFile into $nssmWindows"
 
-    $item = Join-Path -Path (dir (dir $nssmWindows).FullName | where {$_.name -eq "win64"}) -ChildPath "nssm.exe"
+    $item = Join-Path -Path (dir (dir $nssmWindows).FullName | where {$_.name -eq "win64"}).FullName -ChildPath "nssm.exe"
 
     Move-Item $item -Destination $location -Force
 
