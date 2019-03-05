@@ -102,6 +102,7 @@ Function install-nssm{
     Invoke-WebRequest -Uri $url -OutFile $zipFile
 
     Unzip $zipFile $nssmWindows
+    write-host "Uncompressed nssm distribution from $zipFile into $nssmWindows"
 
     $item = Join-Path -Path (dir (dir $nssmWindows).FullName | where {$_.name -eq "win64"}) -ChildPath "nssm.exe"
 
@@ -112,7 +113,7 @@ Function install-nssm{
     #remove-item -Force (dir -Hidden (dir (dir $nssmWindows)))
 
     # Do a regular remove
-    @($nssmWindows, $zipFile) | foreach {Remove-Item $_ -Recurse}
+#    @($nssmWindows, $zipFile) | foreach {Remove-Item $_ -Recurse}
 }
 
 Function doit{
