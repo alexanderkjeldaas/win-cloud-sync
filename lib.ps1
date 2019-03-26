@@ -141,11 +141,12 @@ function install-nssm-service{
            [string]$location,
            [string]$emiInputFolder,
            [string]$emiOutputFolder,
+           [string]$emiGlobalInputFolder,
            [string]$logs,
            [string]$clientName
     )
     $nssm = Join-Path $location "nssm.exe"
-    foreach ($item in @("astorai-input", "astorai-output")) {
+    foreach ($item in @("astorai-input", "astorai-output", "astorai-global")) {
         if (Get-Service $item -ErrorAction Ignore) {
             & $nssm stop $item
             & $nssm remove $item confirm
@@ -155,7 +156,9 @@ function install-nssm-service{
     $rcloneBinary = Join-Path $location "rclone"
     & $nssm install astorai-input $rcloneBinary "-v --config $configLocation sync astorai:waybills/$clientName/toEMI $emiInputFolder"
     & $nssm install astorai-output $rcloneBinary "-v --config $configLocation sync $emiOutputFolder astorai:waybills/$clientName/fromEMI"
-    foreach ($item in @("astorai-input", "astorai-output")) {
+    # These are the events going into the EMI system.
+    & $nssm install astorai-global $rcloneBinary "-v --config $configLocation sync $emiGlobalInputFolder astorai:waybills/$clientName/globalToEMI"
+    foreach ($item in @("astorai-input", "astorai-output", "astorai-global")) {
         & $nssm set $item Description "EMI sync between local and remote folders"
         & $nssm set $item AppDirectory $location
         & $nssm set $item AppRestartDelay 300000
@@ -181,6 +184,8 @@ Function doit{
            [Parameter(Mandatory=$true)]
            [string]$emiOutputFolder,
            [Parameter(Mandatory=$true)]
+           [string]$emiGlobalInputFolder,
+           [Parameter(Mandatory=$true)]
            [string]$clientName,
            [Parameter(Mandatory=$false)]
            [boolean]$exeonly=$true,
@@ -188,7 +193,7 @@ Function doit{
            [boolean]$beta=$true)
 
     $logs = Join-Path $location "logs"
-    foreach ($item in @($location, $emiInputFolder, $emiOutputFolder, $logs)) {
+    foreach ($item in @($location, $emiInputFolder, $emiOutputFolder, $emiGlobalInputFolder, $logs)) {
         write-host "Checking that $item exist and is writable";
         if (!(Test-write $item)) {
             write-host "$item was not writable.  I will try to create it and retry";
@@ -201,6 +206,7 @@ Function doit{
     }
     $emiInputFolderResolved = Resolve-Path $emiInputFolder
     $emiOutputFolderResolved = Resolve-Path $emiOutputFolder
+    $emiGlobalInputFolderResolved = Resolve-Path $emiGlobalInputFolder
     $serviceAccountFileDest = Join-Path $location "service_account_file.txt"
     write-host "Configuring download security protocols"
     [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
@@ -216,7 +222,8 @@ Function doit{
         write-host "Setting up an nssm service that syncs"
         write-host $emiInputFolderResolved
         write-host $emiOutputFolderResolved
+        write-host $emiGlobalInputFolderResolved
         write-host "every 5 minutes"
-        install-nssm-service $location $emiInputFolderResolved $emiOutputFolderResolved $logs $clientName
+        install-nssm-service $location $emiInputFolderResolved $emiOutputFolderResolved $emiGlobalInputFolderResolved $logs $clientName
     }
 }

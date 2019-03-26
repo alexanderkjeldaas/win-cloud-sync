@@ -48,7 +48,7 @@
 # This 
 # param ($ComputerName = $(throw "ComputerName parameter is required."))
 param (
-    [string]$location = $(Read-Host "Location where I should put executables [ default: c:\astorai ]"),
+    [string]$location = $(Read-Host "Location where I should put executables [ default: C:\\Hogia\\Queue\\AstoraiProgram ]"),
     [ValidateScript({
       if( -Not ($_ | Test-Path) ){
           throw "File does not exist"
@@ -56,27 +56,41 @@ param (
       return $true
     })]
     [System.IO.FileInfo]$serviceAccountFile = $(Read-Host "Path to the service_account_file.txt"),
-    [System.IO.FileInfo]$emiInputFolder = $(Read-Host "EMI input folder (to be processed locally)"),
-    [System.IO.FileInfo]$emiOutputFolder = $(Read-Host "EMI output folder (to be processed externally)"),
+    [System.IO.FileInfo]$emiInputFolder = $(Read-Host "EMI input folder (to be processed locally) [ default: C:\\Hogia\\Queue\\AstoraiIn ]""),
+    [System.IO.FileInfo]$emiOutputFolder = $(Read-Host "EMI output folder (to be processed externally) [ default: C:\\Hogia\\Queue\\AstoraiUt ]"),
+    [System.IO.FileInfo]$emiGlobalInputFolder = $(Read-Host "EMI global input folder [ default: C:\\Hogia\\Queue\\MobilastMove ]"),
     [System.IO.FileInfo]$clientName = $(Read-Host "Short client name representing your company")
 )
 
 # write-host "This script will install a service called win-cloud-sync on your system."
 # write-host "The win-cloud-sync This script will install a service called win-cloud-sync on your system"
 if ($location -eq "") {
-  $location = Join-Path "c:" "astorai"
+  $location = [IO.Path]::Combine("C:\\", "Hogia", "Queue", "AstoraiProgram")
 }
 
 if ($serviceAccountFile -eq "") {
   $serviceAccountFile = Resolve-Path "." "service_account_file.txt"
 }
 
+if ($emiInputFolder -eq "") {
+  $emiInputFolder = [IO.Path]::Combine("C:\\", "Hogia", "Queue", "AstoraiIn")
+}
+
+if ($emiOutputFolder -eq "") {
+  $emiOutputFolder = [IO.Path]::Combine("C:\\", "Hogia", "Queue", "AstoraiUt")
+}
+
+if ($emiGlobalInputFolder -eq "") {
+  $emiGlobalInputFolder = [IO.Path]::Combine("C:\\", "Hogia", "Queue", "MobilastMove")
+}
+
+
 Function install{
     $scriptUrl = "https://raw.githubusercontent.com/alexanderkjeldaas/win-cloud-sync/master/lib.ps1"
     write-host "Fetching and executing $scriptUrl"
     $content = (Invoke-WebRequest -Uri $scriptUrl -Headers @{"Cache-Control"="no-cache"}).content
     Invoke-Expression $content
-    DoIt -location $location -serviceAccountFile $serviceAccountFile -emiInputFolder $emiInputFolder -emiOutputFolder $emiOutputFolder -clientName $clientName
+    DoIt -location $location -serviceAccountFile $serviceAccountFile -emiInputFolder $emiInputFolder -emiOutputFolder $emiOutputFolder -emiGlobalInputFolder $emiGlobalInputFolder -clientName $clientName
 }
 
 install 
